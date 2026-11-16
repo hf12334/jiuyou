@@ -143,8 +143,9 @@ function drawCard(H){
   x.fillStyle=K.accent;x.font='bold 44px '+F;let y=wrap(x,t.quote,W/2,790,W-260,62);
   x.textAlign='left';x.fillStyle=K.ink;x.font='36px '+F;y=wrap(x,t.desc,130,y+30,W-260,58);
   y+=40;x.fillStyle=K.dark;x.font='bold 34px '+F;x.fillText('✦ '+C.dimsLabel,130,y);y+=30;
+  x.font='32px '+F;const bx=Math.max(450,130+Math.max(...order.slice(0,3).map(k=>x.measureText(nm(k)).width))+28),bw=W-250-bx;
   order.slice(0,3).forEach(k=>{y+=56;x.fillStyle=K.ink;x.font='32px '+F;x.fillText(nm(k),130,y);
-    rr(x,450,y-24,400,22,11);x.fillStyle=K.line;x.fill();rr(x,450,y-24,Math.max(22,400*pct[k]/100),22,11);x.fillStyle=K.accent;x.fill();
+    rr(x,bx,y-24,bw,22,11);x.fillStyle=K.line;x.fill();rr(x,bx,y-24,Math.max(22,bw*pct[k]/100),22,11);x.fillStyle=K.accent;x.fill();
     x.fillStyle=K.muted;x.textAlign='right';x.fillText(pct[k]+'%',W-130,y);x.textAlign='left';});
   y+=80;x.fillStyle=K.muted;x.font='30px '+F;x.fillText('最合拍：'+nm(t.best),130,y);y+=50;x.fillText('容易擦出火花：'+nm(t.spark),130,y);
   x.textAlign='center';x.fillStyle=K.accent;x.font='bold 36px '+F;x.fillText(C.imgCTA,W/2,H-150);
