@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>你是哪种旧友</title>
+<style>
+  :root{
+    --paper:#f6efe4; --card:#fffaf2; --ink:#2b2622; --muted:#7a6f64;
+    --rust:#b5563f; --rust-soft:#f1d9cf; --teal:#2f4b4e; --line:#e6d9c6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--paper);color:var(--ink)}
+  body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.6;min-height:100vh;-webkit-tap-highlight-color:transparent}
+  .wrap{max-width:480px;margin:0 auto;padding:24px 16px 40px}
+  .screen{display:none}
+  .screen.on{display:block;animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  /* 封面：车票造型 */
+  .ticket{background:var(--card);border-radius:18px;position:relative;overflow:hidden;
+    box-shadow:0 8px 24px rgba(80,50,30,.08)}
+  .ticket-top{background:var(--teal);color:#f6efe4;padding:22px 22px 18px}
+  .ticket-top small{letter-spacing:.2em;opacity:.75;font-size:12px}
+  .ticket-top h1{font-size:28px;line-height:1.3;margin-top:8px;font-weight:700}
+  .route{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:14px;opacity:.9}
+  .route i{flex:1;border-top:1px dashed rgba(246,239,228,.6)}
+  .perf{height:0;border-top:2px dashed var(--line);margin:0 18px;position:relative}
+  .perf:before,.perf:after{content:"";position:absolute;top:-12px;width:22px;height:22px;border-radius:50%;background:var(--paper)}
+  .perf:before{left:-30px}.perf:after{right:-30px}
+  .ticket-body{padding:20px 22px 24px}
+  .ticket-body p{color:var(--muted);font-size:15px}
+  .meta{display:flex;gap:16px;margin:16px 0 20px;font-size:13px;color:var(--muted)}
+  .meta b{display:block;color:var(--ink);font-size:16px}
+  .btn{display:block;width:100%;border:0;border-radius:999px;padding:15px;font-size:17px;font-weight:600;
+    background:var(--rust);color:#fff;cursor:pointer;font-family:inherit}
+  .btn:active{transform:scale(.98)}
+  .btn.ghost{background:transparent;color:var(--rust);border:1.5px solid var(--rust)}
+  .note{font-size:12px;color:var(--muted);text-align:center;margin-top:18px}
+
+  /* 答题 */
+  .bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--rust);width:0;transition:width .3s}
+  .qhead{display:flex;justify-content:space-between;align-items:center;margin:14px 0 18px;font-size:13px;color:var(--muted)}
+  .back{background:none;border:0;color:var(--muted);font-size:13px;cursor:pointer;font-family:inherit}
+  .back[disabled]{visibility:hidden}
+  .qtext{font-size:20px;font-weight:600;line-height:1.5;margin-bottom:20px}
+  .opt{display:block;width:100%;text-align:left;background:var(--card);border:1.5px solid var(--line);
+    border-radius:14px;padding:15px 16px;margin-bottom:12px;font-size:16px;color:var(--ink);cursor:pointer;
+    font-family:inherit;line-height:1.5;transition:border-color .15s,background .15s}
+  .opt:active,.opt.picked{border-color:var(--rust);background:var(--rust-soft)}
+
+  /* 过场 */
+  .loading{text-align:center;padding-top:30vh}
+  .train{font-size:44px;display:inline-block;animation:run 1.2s ease-in-out infinite}
+  @keyframes run{0%,100%{transform:translateX(-14px)}50%{transform:translateX(14px)}}
+  .loading p{margin-top:16px;color:var(--muted)}
+
+  /* 结果 */
+  .res-card{background:var(--card);border-radius:18px;overflow:hidden;box-shadow:0 8px 24px rgba(80,50,30,.08)}
+  .res-top{background:var(--teal);color:#f6efe4;padding:22px;text-align:center}
+  .res-top small{letter-spacing:.2em;opacity:.75;font-size:12px}
+  .res-emoji{font-size:52px;line-height:1.2;margin-top:10px}
+  .res-name{font-size:30px;font-weight:700;margin-top:4px}
+  .res-alias{opacity:.85;font-size:14px}
+  .tags{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}
+  .tags span{border:1px solid rgba(246,239,228,.5);border-radius:999px;padding:2px 12px;font-size:13px}
+  .res-body{padding:20px 22px 24px}
+  .quote{font-size:17px;font-weight:600;color:var(--rust);text-align:center;margin-bottom:16px}
+  .sec{margin-top:18px}
+  .sec h3{font-size:14px;color:var(--teal);letter-spacing:.05em;margin-bottom:6px}
+  .sec p{font-size:15px}
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+  .pair div{background:var(--paper);border-radius:12px;padding:10px 12px;font-size:14px}
+  .pair b{display:block;font-size:12px;color:var(--muted);font-weight:500}
+  .dims .row{display:flex;align-items:center;gap:10px;font-size:13px;margin-top:6px}
+  .dims .row span:first-child{width:84px;flex:none}
+  .dims .row .bar{flex:1}
+  .dims .row span:last-child{width:36px;text-align:right;color:var(--muted)}
+  .actions{display:grid;gap:12px;margin-top:22px}
+
+  /* 结果图弹层 */
+  .modal{position:fixed;inset:0;background:rgba(20,15,10,.75);display:none;align-items:center;justify-content:center;
+    flex-direction:column;padding:20px;z-index:10}
+  .modal.on{display:flex}
+  .modal img{max-width:100%;max-height:78vh;border-radius:12px}
+  .modal p{color:#fff;margin-top:12px;font-size:14px}
+  .modal button{margin-top:10px;background:none;border:1px solid #fff;color:#fff;border-radius:999px;padding:6px 20px;font-family:inherit}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 封面 -->
+  <section class="screen on" id="s-cover">
+    <div class="ticket">
+      <div class="ticket-top">
+        <small>旧友人格鉴定所 · No.018</small>
+        <h1>你在友情里<br>是哪种旧友？</h1>
+        <div class="route"><span>出发 · 十年前</span><i></i><span>到站 · 现在</span></div>
+      </div>
+      <div class="perf"></div>
+      <div class="ticket-body">
+        <p>一趟18天的高原列车，同车厢坐着一位多年没联系的老朋友。重逢、尴尬、旧账、和解……面对友情里的隔阂与遗憾，你会怎么做？</p>
+        <div class="meta">
+          <div><b>15 题</b>情景选择</div>
+          <div><b>8 种</b>旧友人格</div>
+          <div><b>约 3 分钟</b>凭直觉选</div>
+        </div>
+        <button class="btn" id="startBtn">检票上车</button>
+      </div>
+    </div>
+    <p class="note">娱乐向性格测试，非专业心理测评，与任何节目官方无关</p>
+  </section>
+
+  <!-- 答题 -->
+  <section class="screen" id="s-quiz">
+    <div class="bar"><i id="prog"></i></div>
+    <div class="qhead">
+      <button class="back" id="backBtn">‹ 上一题</button>
+      <span id="qnum">1 / 15</span>
+    </div>
+    <div class="qtext" id="qtext"></div>
+    <div id="opts"></div>
+  </section>
+
+  <!-- 过场 -->
+  <section class="screen" id="s-loading">
+    <div class="loading">
+      <div class="train">🚂</div>
+      <p>列车即将到站，正在鉴定你的旧友人格…</p>
+    </div>
+  </section>
+
+  <!-- 结果 -->
+  <section class="screen" id="s-result">
+    <div class="res-card">
+      <div class="res-top">
+        <small>你的旧友人格是</small>
+        <div class="res-emoji" id="rEmoji"></div>
+        <div class="res-name" id="rName"></div>
+        <div class="res-alias" id="rAlias"></div>
+        <div class="tags" id="rTags"></div>
+      </div>
+      <div class="res-body">
+        <div class="quote" id="rQuote"></div>
+        <div class="sec"><h3>✦ 你在友情里的样子</h3><p id="rDesc"></p></div>
+        <div class="sec"><h3>✦ 你的闪光点</h3><p id="rGood"></p></div>
+        <div class="sec"><h3>✦ 小心这一点</h3><p id="rWarn"></p></div>
+        <div class="sec"><h3>✦ 你在列车上的位置</h3><p id="rSeat"></p></div>
+        <div class="sec"><h3>✦ 友情相性</h3>
+          <div class="pair">
+            <div><b>最合拍</b><span id="rBest"></span></div>
+            <div><b>容易擦出火花</b><span id="rSpark"></span></div>
+          </div>
+        </div>
+        <div class="sec dims"><h3>✦ 你的旧友底色</h3><div id="rDims"></div></div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="saveBtn">生成结果图 · 晒给老朋友</button>
+      <button class="btn ghost" id="againBtn">再测一次</button>
+    </div>
+    <p class="note">娱乐向性格测试，非专业心理测评，与任何节目官方无关</p>
+  </section>
+</div>
+
+<div class="modal" id="modal">
+  <img id="shot" alt="结果图">
+  <p>长按图片保存，发给那个很久没联系的人吧</p>
+  <button id="closeModal">关闭</button>
+</div>
+
+<script>
+/* ---------- 8 种旧友人格 ---------- */
+const TYPES = {
+  A:{emoji:"🌙",name:"深夜复盘家",alias:"记心结型",tags:["记性太好","情绪细腻","嘴硬心软"],
+     quote:"「我不是记仇，我只是什么都记得。」",
+     desc:"你对友情的投入，是用“记忆”来计量的。一起吃过的面馆、对方随口说的一句话、那次争吵里是谁先挂的电话，你全都记得。所以你很难真正“翻篇”，不是放不下对方，而是放不下那段很认真的自己。",
+     good:"你是最懂珍惜的人，朋友的小事你都放在心上。",
+     warn:"别让复盘变成内耗。有些答案，问出口比在心里猜一万遍更快。",
+     seat:"靠窗的座位。看着窗外，把一路的风景和心事都收进眼底。",
+     best:"D",spark:"F"},
+  B:{emoji:"🎫",name:"先低头的人",alias:"执着和解型",tags:["主动修复","重感情","不怕丢面子"],
+     quote:"「面子不值钱，你值钱。」",
+     desc:"在你眼里，友情比输赢重要。吵架之后，往往是你先发那句“在吗”。不是你没脾气，而是你很清楚：有些人走散了就真的找不回来，你不愿意拿一段关系去赌一口气。",
+     good:"很多友情能续上，靠的就是你的主动。被你找回的人，会觉得自己被珍惜。",
+     warn:"和解是双向的，别总是一个人扛下所有的“对不起”。",
+     seat:"餐车。你总在那里等着，想请老朋友坐下来喝一杯。",
+     best:"E",spark:"C"},
+  C:{emoji:"🚪",name:"玻璃门",alias:"温柔设防型",tags:["外暖内敛","慢热","观察型"],
+     quote:"「我对谁都好，但心门不是谁都能推开。」",
+     desc:"你温和、好相处，大家都觉得你人很好。但只有你知道，心里有一扇透明的门，看得见，却不轻易打开。你需要时间确认对方是真心的，一旦确认，你会比谁都长情。",
+     good:"分寸感极好，不给人压力，也很少看错人。",
+     warn:"别让“保护自己”变成“错过别人”。偶尔先开门，也没那么可怕。",
+     seat:"上铺。安静、有自己的小空间，帘子只拉开一半。",
+     best:"G",spark:"B"},
+  D:{emoji:"⚡",name:"当面说清派",alias:"直球热烈型",tags:["有话直说","矛盾不过夜","行动派"],
+     quote:"「有问题就说，别让误会坐满整节车厢。」",
+     desc:"你最受不了冷战和瞎猜。在你看来，友情里最伤人的不是吵架，而是该说的话一直没说。所以你宁愿当面把话摊开，哪怕当下有点尴尬，也好过隔阂越积越深。",
+     good:"你是关系里的“清道夫”，很多别人不敢碰的结，只有你敢去解。",
+     warn:"直接不等于用力。把话说清楚的时候，也记得说软一点。",
+     seat:"车厢连接处。哪里有问题，你就往哪里去。",
+     best:"A",spark:"G"},
+  E:{emoji:"🏔️",name:"一直在",alias:"默默守候型",tags:["情绪稳定","话少靠谱","长情"],
+     quote:"「我不常说，但我一直在。」",
+     desc:"你不是朋友圈里最热闹的那个，却总在关键时刻出现。搬家、生病、失恋，你不会说太多安慰的话，只会默默把事情做了。你的友情像高原上的山：不会跑过来抱你，但你回头时，它永远在原地。",
+     good:"你本身就是朋友们的安全感。",
+     warn:"偶尔也说说你自己，别让大家只记得你在付出。",
+     seat:"下铺。稳稳当当，谁累了都可以过来坐一会儿。",
+     best:"B",spark:"F"},
+  F:{emoji:"🍃",name:"各自安好派",alias:"体面告别型",tags:["清醒","不强求","尊重边界"],
+     quote:"「走过一段就很好，不必每段都走到终点。」",
+     desc:"你相信友情有自己的季节。合得来就同行，走散了也不怨。你不是冷淡，而是太清楚：硬留住的关系，往往比分开更累。你珍惜每一次相遇，但不会用“永远”去绑住谁。",
+     good:"和你做朋友没有负担，相处起来自由又轻松。",
+     warn:"清醒之外，也给某些人留一张回程票。有些关系，值得多争取一次。",
+     seat:"过道边的座位。随时可以起身，也随时可以坐回来。",
+     best:"C",spark:"A"},
+  G:{emoji:"🎈",name:"玩笑缓冲器",alias:"气氛担当型",tags:["自带笑点","化解尴尬","热乎"],
+     quote:"「先笑一下，剩下的路慢慢走。」",
+     desc:"有你在的地方，就不会冷场。重逢的尴尬、吵完架的别扭，你一句玩笑就能化开。其实你也有敏感的时候，只是你更愿意先让大家轻松，再慢慢消化自己的情绪。",
+     good:"你是人群里的破冰船，很多重逢因为你才变得自然。",
+     warn:"不是所有话题都适合用玩笑带过。认真的时候，大家也想听你认真。",
+     seat:"车厢中间的卡座，四个人刚好凑一桌牌。",
+     best:"C",spark:"D"},
+  H:{emoji:"📷",name:"时光保管员",alias:"记录珍藏型",tags:["念旧","仪式感","浪漫"],
+     quote:"「我们的故事，我替你存着。」",
+     desc:"你记得每个纪念日，相册里存着十年前的合照，聊天记录舍不得删。对你来说，回忆不是过去式，而是友情的一部分。你相信只要还有人记得，一段关系就不会真的消失。",
+     good:"你让友情有了分量，被你记住的人会觉得自己很重要。",
+     warn:"回忆很美，但别只活在回忆里，新的故事也值得开始。",
+     seat:"观景车厢。你在给每一段风景拍照。",
+     best:"E",spark:"F"}
+};
+
+/* ---------- 15 道题：每个选项 [文字, {类型:分值}] ---------- */
+const QS = [
+ ["列车上，你和一位多年没联系的老友被分到同一个包厢。第一晚你会：",[
+   ["假装很困早早躺下，其实一夜没睡，脑子里放完了你们的十年",{A:2,C:1}],
+   ["先开口：“好久不见，你最近还好吗？”",{B:2,D:1}],
+   ["掏出零食分ta一半：“吃不吃？这家我们以前常买”",{G:2,H:1}],
+   ["默默把下铺让给ta，什么也没说",{E:2}]]],
+ ["老友突然提起当年你们闹掰的那件事：",[
+   ["终于来了。你直接说：“那今天就把话说开吧”",{D:2}],
+   ["你说“都过去了”，心里却咯噔一下",{C:2,A:1}],
+   ["你笑着打岔：“哎呀那时候我们都还小嘛”",{G:2}],
+   ["你认真听完，说：“那时候我也有不对的地方”",{B:2}]]],
+ ["你手机相册里和老朋友有关的照片：",[
+   ["分门别类建了相册，十年前的都还在",{H:2}],
+   ["删过一次，又从“最近删除”里恢复了",{A:2}],
+   ["换手机时早弄丢了，但人还记得",{F:2}],
+   ["很少拍照，觉得人在身边就够了",{E:2}]]],
+ ["朋友半夜发来一句“在吗”：",[
+   ["秒回“在，怎么了？”，然后一直等着",{E:2}],
+   ["回个“在！”，后面跟三个表情包",{G:2}],
+   ["先在心里打好草稿，斟酌半天才回",{C:2}],
+   ["直接一个电话打过去",{D:2}]]],
+ ["用一个词形容你理想中的友情：",[
+   ["坦荡：有话直说，不藏着掖着",{D:2}],
+   ["长久：不常联系，但一直都在",{E:2}],
+   ["自由：合得来就走一段，散了也不怨",{F:2}],
+   ["珍藏：每段回忆都值得被好好收着",{H:2}]]],
+ ["旅途中有一段路完全没信号，三天联系不上外界：",[
+   ["正好，把这几天的见闻写成日记",{H:2}],
+   ["有点慌，怕错过谁的消息",{A:2}],
+   ["无所谓，该联系的人回来再说",{F:2}],
+   ["张罗大家打牌、玩游戏，信号算什么",{G:2}]]],
+ ["朋友做了一个你不认同的决定：",[
+   ["直说“我觉得不行”，理由列三条",{D:2}],
+   ["嘴上说“你开心就好”，私下替ta担心",{C:2,E:1}],
+   ["尊重ta，那是ta的人生",{F:2}],
+   ["不劝了，只告诉ta“不管怎样我都在”",{E:2}]]],
+ ["和朋友吵架之后，通常是：",[
+   ["我先找ta，哪怕不是我的错",{B:2}],
+   ["谁也不找，交给时间",{F:2,C:1}],
+   ["我会憋很久，反复回想当时的每一句话",{A:2}],
+   ["我发个梗图过去，就当翻篇了",{G:2}]]],
+ ["站台上，朋友说“下一站我要先下车了”：",[
+   ["帮ta拎好行李，一直送到车门口",{E:2}],
+   ["鼻子一酸，但笑着说“一路顺风”",{C:2}],
+   ["“那说好了，下次一定再见”",{B:2}],
+   ["拍下ta下车的背影，存进相册",{H:2}]]],
+ ["老友说“你一点都没变”，你心里想：",[
+   ["其实我变了很多，只是你没看见",{C:2}],
+   ["真的吗！开心一整天",{G:2,B:1}],
+   ["可我们之间变了",{A:2}],
+   ["人总会变，难得的是我们还能坐在一起",{F:2}]]],
+ ["有人问你“你最好的朋友是谁”：",[
+   ["脱口而出一个名字，想都不用想",{D:2,E:1}],
+   ["犹豫了：是现在最常聊的那个，还是很久没联系的那个？",{A:2}],
+   ["想起好几张脸，每一段都很重要",{H:2}],
+   ["“最好”不重要，还在身边的就是好的",{F:2}]]],
+ ["旅行团里来了一位很闹腾的新朋友：",[
+   ["第一个上去搭话的就是你",{G:2}],
+   ["先观察一阵子，再决定要不要靠近",{C:2}],
+   ["合得来就聊，合不来也不勉强",{F:2}],
+   ["看ta落单了，悄悄喊ta一起吃饭",{E:2}]]],
+ ["朋友过生日，你通常会：",[
+   ["零点准时发一篇长文",{H:2,B:1}],
+   ["记得，但不好意思太隆重，最后只发了句“生快”",{C:2}],
+   ["送一样ta随口提过一次的东西",{E:2}],
+   ["直接拉上一群人去给ta惊喜",{G:2,D:1}]]],
+ ["想起一位走散的老朋友，你最可能：",[
+   ["翻出聊天记录，从头看一遍",{A:2,H:1}],
+   ["鼓起勇气发一句“最近好吗”",{B:2}],
+   ["有点遗憾，但相信遇见过就够了",{F:2}],
+   ["发条朋友圈，配一首你们以前常听的歌",{H:2}]]],
+ ["18天旅程的最后一晚，你最想对老友说：",[
+   ["“这次我们把话都说开了，挺好”",{D:2}],
+   ["“以后别再走散了，好吗”",{B:2}],
+   ["“其实这些年，我一直记得你”",{A:2}],
+   ["“不管多久，我都在原地”",{E:2}]]]
+];
+
+/* 每种人格的满分（用于归一化，避免题目分布不均造成偏差） */
+const MAX = {}; Object.keys(TYPES).forEach(k=>MAX[k]=0);
+QS.forEach(([,opts])=>{
+  Object.keys(TYPES).forEach(k=>{ MAX[k]+=Math.max(...opts.map(o=>o[1][k]||0)); });
+});
+
+const $ = id=>document.getElementById(id);
+let idx=0, picks=[], lastResult=null, busy=false;
+
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on')); $(id).classList.add('on'); window.scrollTo(0,0); }
+
+function renderQ(){
+  const [q,opts]=QS[idx];
+  $('qtext').textContent=q;
+  $('qnum').textContent=(idx+1)+' / '+QS.length;
+  $('prog').style.width=(idx/QS.length*100)+'%';
+  $('backBtn').disabled = idx===0;
+  const box=$('opts'); box.innerHTML='';
+  opts.forEach((o,i)=>{
+    const b=document.createElement('button');
+    b.className='opt'+(picks[idx]===i?' picked':'');
+    b.textContent=o[0];
+    b.onclick=()=>{ if(busy) return; busy=true; b.classList.add('picked'); picks[idx]=i; setTimeout(()=>{busy=false;next();},180); };
+    box.appendChild(b);
+  });
+}
+function next(){
+  if(idx<QS.length-1){ idx++; renderQ(); }
+  else { $('prog').style.width='100%'; show('s-loading'); setTimeout(finish,1600); }
+}
+function finish(){
+  const raw={}; Object.keys(TYPES).forEach(k=>raw[k]=0);
+  picks.forEach((p,i)=>{ const w=QS[i][1][p][1]; for(const k in w) raw[k]+=w[k]; });
+  const pct={}; for(const k in raw) pct[k]=Math.round(raw[k]/MAX[k]*100);
+  const order=Object.keys(pct).sort((a,b)=>pct[b]-pct[a]||raw[b]-raw[a]);
+  lastResult={key:order[0],order,pct};
+  renderResult();
+  show('s-result');
+}
+function renderResult(){
+  const {key,order,pct}=lastResult, t=TYPES[key];
+  $('rEmoji').textContent=t.emoji; $('rName').textContent=t.name; $('rAlias').textContent=t.alias;
+  $('rTags').innerHTML=t.tags.map(x=>'<span>'+x+'</span>').join('');
+  $('rQuote').textContent=t.quote; $('rDesc').textContent=t.desc;
+  $('rGood').textContent=t.good; $('rWarn').textContent=t.warn; $('rSeat').textContent=t.seat;
+  $('rBest').textContent=TYPES[t.best].emoji+' '+TYPES[t.best].name;
+  $('rSpark').textContent=TYPES[t.spark].emoji+' '+TYPES[t.spark].name;
+  $('rDims').innerHTML=order.slice(0,4).map(k=>
+    '<div class="row"><span>'+TYPES[k].emoji+' '+TYPES[k].name+'</span><div class="bar"><i style="width:'+pct[k]+'%"></i></div><span>'+pct[k]+'%</span></div>'
+  ).join('');
+}
+
+/* ---------- 结果图（纯 canvas 绘制，无外部依赖） ---------- */
+const NO_START='，。、！？：；」”』）…';
+function wrap(ctx,text,x,y,maxW,lh){
+  let line='';
+  for(const ch of text){
+    // 标点不放在行首：超宽时也挂在当前行末尾
+    if(ctx.measureText(line+ch).width>maxW && !NO_START.includes(ch)){ ctx.fillText(line,x,y); line=ch; y+=lh; }
+    else line+=ch;
+  }
+  if(line){ ctx.fillText(line,x,y); y+=lh; }
+  return y;
+}
+function rr(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function makeImage(){
+  // 先量一遍内容高度，再按实际高度正式绘制，避免文字和页脚重叠
+  const h=drawCard(2400).end+240;
+  return drawCard(h).canvas.toDataURL('image/png');
+}
+function drawCard(H){
+  const {key,order,pct}=lastResult, t=TYPES[key];
+  const W=1080, c=document.createElement('canvas'); c.width=W; c.height=H;
+  const x=c.getContext('2d'), F='"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif';
+  x.fillStyle='#f6efe4'; x.fillRect(0,0,W,H);
+  rr(x,60,60,W-120,H-120,40); x.fillStyle='#fffaf2'; x.fill();
+  x.save(); rr(x,60,60,W-120,620,40); x.clip(); x.fillStyle='#2f4b4e'; x.fillRect(60,60,W-120,620); x.restore();
+  x.textAlign='center'; x.fillStyle='rgba(246,239,228,.75)'; x.font='32px '+F;
+  x.fillText('旧 友 人 格 鉴 定 所',W/2,150);
+  x.font='140px '+F; x.fillText(t.emoji,W/2,320);
+  x.fillStyle='#f6efe4'; x.font='bold 96px '+F; x.fillText(t.name,W/2,450);
+  x.font='38px '+F; x.fillStyle='rgba(246,239,228,.85)'; x.fillText(t.alias,W/2,510);
+  // 标签
+  x.font='32px '+F; const tw=t.tags.map(s=>x.measureText(s).width+56), total=tw.reduce((a,b)=>a+b,0)+20*(tw.length-1);
+  let tx=(W-total)/2;
+  t.tags.forEach((s,i)=>{ rr(x,tx,560,tw[i],60,30); x.strokeStyle='rgba(246,239,228,.6)'; x.lineWidth=2; x.stroke();
+    x.fillStyle='#f6efe4'; x.fillText(s,tx+tw[i]/2,601); tx+=tw[i]+20; });
+  // 撕票线
+  x.setLineDash([14,12]); x.strokeStyle='#e6d9c6'; x.lineWidth=4; x.beginPath(); x.moveTo(110,700); x.lineTo(W-110,700); x.stroke(); x.setLineDash([]);
+  // 金句
+  x.fillStyle='#b5563f'; x.font='bold 44px '+F; let y=wrap(x,t.quote,W/2,790,W-260,62);
+  // 描述
+  x.textAlign='left'; x.fillStyle='#2b2622'; x.font='36px '+F; y=wrap(x,t.desc,130,y+30,W-260,58);
+  // 底色条
+  y+=40; x.fillStyle='#2f4b4e'; x.font='bold 34px '+F; x.fillText('✦ 我的旧友底色',130,y); y+=30;
+  order.slice(0,3).forEach(k=>{
+    y+=56; x.fillStyle='#2b2622'; x.font='32px '+F; x.fillText(TYPES[k].emoji+' '+TYPES[k].name,130,y);
+    rr(x,430,y-24,420,22,11); x.fillStyle='#e6d9c6'; x.fill();
+    rr(x,430,y-24,Math.max(22,420*pct[k]/100),22,11); x.fillStyle='#b5563f'; x.fill();
+    x.fillStyle='#7a6f64'; x.textAlign='right'; x.fillText(pct[k]+'%',W-130,y); x.textAlign='left';
+  });
+  // 相性
+  y+=80; x.fillStyle='#7a6f64'; x.font='30px '+F;
+  x.fillText('最合拍：'+TYPES[t.best].emoji+' '+TYPES[t.best].name,130,y);
+  y+=50; x.fillText('容易擦出火花：'+TYPES[t.spark].emoji+' '+TYPES[t.spark].name,130,y);
+  // 页脚
+  x.textAlign='center'; x.fillStyle='#b5563f'; x.font='bold 36px '+F; x.fillText('你在友情里是哪种旧友？来测测',W/2,H-150);
+  x.fillStyle='#7a6f64'; x.font='26px '+F; x.fillText('娱乐向性格测试 · 非专业心理测评',W/2,H-100);
+  return {canvas:c,end:y};
+}
+
+$('startBtn').onclick=()=>{ idx=0; picks=[]; renderQ(); show('s-quiz'); };
+$('backBtn').onclick=()=>{ if(idx>0){ idx--; renderQ(); } };
+$('againBtn').onclick=()=>{ idx=0; picks=[]; show('s-cover'); };
+$('saveBtn').onclick=()=>{ $('shot').src=makeImage(); $('modal').classList.add('on'); };
+$('closeModal').onclick=()=>$('modal').classList.remove('on');
+</script>
+</body>
+</html>
